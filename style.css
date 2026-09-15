@@ -1056,3 +1056,26 @@ body.menu-open, body.secret-open { overflow: hidden; }
 .secret-stage.is-visible {
   opacity: 1;
 }
+/* Countdown timer in reward panel */
+.reward-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  margin-top: .9rem;
+  padding: .35rem .75rem;
+  border-radius: 999px;
+  border: 1px solid hsl(331 78% 75% / .35);
+  background: hsl(331 78% 75% / .06);
+  color: #ffb6c1;
+  font-family: var(--app-font-mono);
+  font-size: .62rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+/* Expired hint state */
+.secret-lock-hint.is-expired {
+  color: #ff8ba7;
+  border-color: rgba(255, 139, 167, .35);
+  background: rgba(255, 139, 167, .07);
+}
