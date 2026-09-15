@@ -5,10 +5,23 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------- SECRET CONFIG ---------- */
-  const SECRET_CODE = '2055';                // Case-insensitive
+  const SECRET_CODE = '2055';
   const VISITS_REQUIRED = 5;
+  const UNLOCK_DURATION_MS = 24 * 60 * 60 * 1000;   // 24 hours
   const VISIT_KEY = 'mommysVisits';
-  const UNLOCK_KEY = 'mommysUnlocked';
+  const UNLOCK_KEY = 'mommysUnlockedUntil';         // stores a timestamp now
+
+  /* ---------- EXPIRY CHECK (runs before everything) ---------- */
+  const now = Date.now();
+  let unlockedUntil = parseInt(localStorage.getItem(UNLOCK_KEY) || '0', 10);
+  let alreadyUnlocked = unlockedUntil > now;
+
+  if (!alreadyUnlocked && unlockedUntil > 0) {
+    // Was unlocked but expired — clean up
+    localStorage.removeItem(UNLOCK_KEY);
+    localStorage.setItem(VISIT_KEY, '0');
+    unlockedUntil = 0;
+  }
 
   /* ---------- DAILY MESSAGE ---------- */
   const dailyMessages = [
@@ -31,15 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (moodDot && moodLabel) {
     const hour = new Date().getHours();
     let color, label;
-    if (hour >= 5 && hour < 12) {
-      color = '#ffd700'; label = 'Mommy is... just waking up';
-    } else if (hour >= 12 && hour < 17) {
-      color = '#ffb6c1'; label = 'Mommy is... feeling playful';
-    } else if (hour >= 17 && hour < 21) {
-      color = '#d8bfd8'; label = 'Mommy is... winding down';
-    } else {
-      color = '#8a2be2'; label = 'Mommy is... thinking of you';
-    }
+    if (hour >= 5 && hour < 12) { color = '#ffd700'; label = 'Mommy is... just waking up'; }
+    else if (hour >= 12 && hour < 17) { color = '#ffb6c1'; label = 'Mommy is... feeling playful'; }
+    else if (hour >= 17 && hour < 21) { color = '#d8bfd8'; label = 'Mommy is... winding down'; }
+    else { color = '#8a2be2'; label = 'Mommy is... thinking of you'; }
     moodDot.style.background = color;
     moodDot.style.boxShadow = `0 0 10px ${color}`;
     moodLabel.textContent = label;
@@ -54,9 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ICON_MENU = '<path d="M4 7h16M4 12h16M4 17h16"/>';
   const ICON_X    = '<path d="M6 6l12 12M18 6 6 18"/>';
 
-  const setMenuIcon = (open) => {
-    if (menuIcon) menuIcon.innerHTML = open ? ICON_X : ICON_MENU;
-  };
+  const setMenuIcon = (open) => { if (menuIcon) menuIcon.innerHTML = open ? ICON_X : ICON_MENU; };
 
   const openMenu = () => {
     navOverlay.classList.add('is-open');
@@ -116,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ---------- VISIT COUNTER ---------- */
   let visits = parseInt(localStorage.getItem(VISIT_KEY) || '0', 10) + 1;
   localStorage.setItem(VISIT_KEY, visits);
-  const alreadyUnlocked = localStorage.getItem(UNLOCK_KEY) === 'true';
 
   /* ---------- SECRET DOOR ELEMENTS ---------- */
   const secretLink = document.getElementById('secret-link');
@@ -135,15 +140,43 @@ document.addEventListener('DOMContentLoaded', () => {
   const rewardBtn = document.getElementById('secret-reward-button');
   const secretContent = document.getElementById('secret-content');
   const secretClose = document.getElementById('secret-close');
+  const countdownEl = document.getElementById('reward-countdown');
 
   const SECRET_MESSAGE = "So... you came back. And you supported me. That's not a coincidence. You're one of my favorites now...";
   const LOCK_SVG_LOCKED = `<svg viewBox="0 0 24 24" width="58" height="58" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
   const LOCK_SVG_OPEN   = `<svg viewBox="0 0 24 24" width="58" height="58" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>`;
 
   let timers = [];
-  const clearTimers = () => {
-    timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
-    timers = [];
+  const clearTimers = () => { timers.forEach((t) => { clearTimeout(t); clearInterval(t); }); timers = []; };
+
+  /* ---------- COUNTDOWN ---------- */
+  let countdownInterval = null;
+
+  const formatRemaining = (ms) => {
+    if (ms <= 0) return 'expired';
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+  };
+
+  const startCountdown = () => {
+    if (!countdownEl) return;
+    if (countdownInterval) clearInterval(countdownInterval);
+    const tick = () => {
+      const remaining = unlockedUntil - Date.now();
+      if (remaining <= 0) {
+        countdownEl.textContent = '⏳ expired';
+        if (countdownInterval) clearInterval(countdownInterval);
+        // Force expiry
+        localStorage.removeItem(UNLOCK_KEY);
+        localStorage.setItem(VISIT_KEY, '0');
+        return;
+      }
+      countdownEl.textContent = `⏳ ${formatRemaining(remaining)} left`;
+    };
+    tick();
+    countdownInterval = setInterval(tick, 30000); // update every 30s
   };
 
   /* ---------- STAGE MANAGER ---------- */
@@ -161,7 +194,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (s === stage) {
         s.classList.remove('is-hidden', 'is-fading-out');
         s.classList.add('is-fading-in');
-        // force reflow, then animate in
         void s.offsetWidth;
         s.classList.remove('is-fading-in');
         s.classList.add('is-visible');
@@ -186,23 +218,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetSecret = () => {
     clearTimers();
     hideAllStages();
-
-    // Reset typing
     typingEl.innerHTML = '';
     typingEl.style.opacity = '1';
-
-    // Reset lock
     lockEl.classList.remove('is-visible', 'is-shaking', 'is-unlocked');
     lockEl.innerHTML = LOCK_SVG_LOCKED;
-
-    // Hide success, reward button, content
     successEl.hidden = true;
     successEl.style.opacity = '';
     rewardBtn.hidden = true;
     rewardBtn.classList.remove('is-visible');
     secretContent.hidden = true;
     secretContent.style.opacity = '';
-
     secretClose.hidden = true;
     codeError.hidden = true;
     codeInput.value = '';
@@ -215,9 +240,15 @@ document.addEventListener('DOMContentLoaded', () => {
     secretOverlay.classList.add('is-open');
     secretOverlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('secret-open');
-    if (alreadyUnlocked) {
+
+    // Re-check unlock freshness right when they open
+    const fresh = parseInt(localStorage.getItem(UNLOCK_KEY) || '0', 10);
+    if (fresh > Date.now()) {
+      unlockedUntil = fresh;
+      alreadyUnlocked = true;
       startReveal();
     } else {
+      alreadyUnlocked = false;
       setStage(gateStage);
     }
   };
@@ -232,8 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ---------- REVEAL SEQUENCE ---------- */
   const startReveal = () => {
     setStage(revealStage);
-
-    // 1. Typing
     let i = 0;
     typingEl.style.opacity = '1';
     typingEl.innerHTML = '';
@@ -244,32 +273,21 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(typingInterval);
         typingEl.innerHTML = SECRET_MESSAGE;
 
-        // 2. Pause, then fade typing out
         const t1 = setTimeout(() => {
           typingEl.style.opacity = '0';
-
-          // 3. After typing fully gone, show lock
           const t2 = setTimeout(() => {
             lockEl.classList.add('is-visible');
-
-            // 4. Shake
             const t3 = setTimeout(() => {
               lockEl.classList.add('is-shaking');
-
-              // 5. Unlock
               const t4 = setTimeout(() => {
                 lockEl.classList.remove('is-shaking');
                 lockEl.classList.add('is-unlocked');
                 lockEl.innerHTML = LOCK_SVG_OPEN;
                 successEl.hidden = false;
-
-                // 6. After a pause, fade out lock + success
                 const t5 = setTimeout(() => {
                   lockEl.classList.remove('is-visible');
                   successEl.style.transition = 'opacity .45s ease';
                   successEl.style.opacity = '0';
-
-                  // 7. Show reward button
                   const t6 = setTimeout(() => {
                     successEl.hidden = true;
                     successEl.style.opacity = '';
@@ -324,9 +342,12 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const typed = (codeInput.value || '').trim().toLowerCase();
       if (typed === SECRET_CODE.toLowerCase()) {
-        localStorage.setItem(UNLOCK_KEY, 'true');
+        // Set the 24h unlock timestamp
+        unlockedUntil = Date.now() + UNLOCK_DURATION_MS;
+        localStorage.setItem(UNLOCK_KEY, String(unlockedUntil));
+        localStorage.setItem(VISIT_KEY, '0');
+
         fadeOutStage(codeStage, () => {
-          // reset everything visually before reveal
           successEl.hidden = true;
           rewardBtn.hidden = true;
           rewardBtn.classList.remove('is-visible');
@@ -358,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(() => {
           secretContent.style.transition = 'opacity .45s ease';
           secretContent.style.opacity = '1';
+          startCountdown();
         });
       }, 450);
     });
@@ -379,6 +401,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (alreadyUnlocked) {
       secretHint.textContent = '🔓 Unlocked';
       secretHint.classList.add('is-unlocked');
+    } else if (unlockedUntil > 0 && unlockedUntil <= Date.now()) {
+      secretHint.textContent = '⏳ Expired — support again';
+      secretHint.classList.add('is-expired');
     } else if (visits >= VISITS_REQUIRED) {
       secretHint.textContent = `🔓 ${visits}/5 — ready`;
       secretHint.classList.add('is-unlocked');
