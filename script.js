@@ -142,8 +142,25 @@ document.addEventListener('DOMContentLoaded', () => {
   let timers = [];
   const clearTimers = () => { timers.forEach((t) => clearTimeout(t) || clearInterval(t)); timers = []; };
 
-  const showStage = (stage) => {
-    [gateStage, codeStage, revealStage].forEach((s) => { s.hidden = s !== stage; });
+   const showStage = (stage, withFade = false) => {
+    const allStages = [gateStage, codeStage, revealStage];
+    if (!withFade) {
+      allStages.forEach((s) => { s.hidden = s !== stage; s.classList.remove('is-fading'); });
+      return;
+    }
+    // Fade out the currently visible one, then swap
+    const visible = allStages.find((s) => !s.hidden);
+    if (visible) {
+      visible.classList.add('is-fading');
+      setTimeout(() => {
+        allStages.forEach((s) => {
+          s.hidden = s !== stage;
+          s.classList.remove('is-fading');
+        });
+      }, 450);
+    } else {
+      allStages.forEach((s) => { s.hidden = s !== stage; s.classList.remove('is-fading'); });
+    }
   };
 
   const resetSecret = () => {
@@ -182,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const startReveal = () => {
-    showStage(revealStage);
+        showStage(revealStage, true);
     // Type message
     let i = 0;
     const typingInterval = setInterval(() => {
@@ -249,10 +266,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ---------- Reward reveal ---------- */
-  rewardBtn.addEventListener('click', () => {
-    rewardBtn.hidden = true;
-    rewardBtn.classList.remove('is-visible');
-    secretContent.hidden = false;
+    rewardBtn.addEventListener('click', () => {
+    rewardBtn.classList.add('is-fading');
+    setTimeout(() => {
+      rewardBtn.hidden = true;
+      rewardBtn.classList.remove('is-visible', 'is-fading');
+      secretContent.hidden = false;
+      secretContent.classList.add('is-appearing');
+    }, 450);
   });
 
   secretClose.addEventListener('click', closeSecret);
