@@ -1014,3 +1014,24 @@ body.menu-open, body.secret-open { overflow: hidden; }
     transition-duration: .01ms !important;
   }
 }
+
+/* Secret Door lock hint */
+.secret-lock-hint {
+  display: inline-block;
+  margin-left: .7rem;
+  font-family: var(--app-font-mono);
+  font-size: .55rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  padding: .3rem .6rem;
+  border: 1px solid hsl(var(--foreground) / .12);
+  border-radius: 999px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.secret-lock-hint.is-unlocked {
+  color: hsl(var(--primary));
+  border-color: hsl(var(--primary) / .4);
+  background: hsl(var(--primary) / .07);
+}
