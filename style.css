@@ -1035,3 +1035,20 @@ body.menu-open, body.secret-open { overflow: hidden; }
   border-color: hsl(var(--primary) / .4);
   background: hsl(var(--primary) / .07);
 }
+/* Fade transitions for secret door stages */
+.secret-stage {
+  transition: opacity .5s ease;
+}
+.secret-stage.is-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Reward reveal fade */
+.secret-reward-button.is-fading {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+.secret-content.is-appearing {
+  animation: fade-up .6s ease both;
+}
