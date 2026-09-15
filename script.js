@@ -5,7 +5,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------- SECRET CONFIG ---------- */
-  const SECRET_CODE = 'mommysfavourite';     // Case-insensitive
+  const SECRET_CODE = '2055';     // Case-insensitive
   const VISITS_REQUIRED = 5;                 // Visits before the Secret Door appears
   const VISIT_KEY = 'mommysVisits';
   const UNLOCK_KEY = 'mommysUnlocked';
