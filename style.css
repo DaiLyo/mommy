@@ -188,6 +188,27 @@ h1, h2, h3 { font-weight: 500; }
   transform: rotate(4deg);
 }
 .menu-toggle:focus-visible { outline: 2px solid hsl(var(--accent)); outline-offset: 4px; }
+.menu-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 10;
+  display: grid;
+  width: 2.7rem;
+  height: 2.7rem;
+  place-items: center;
+  border: 1px solid hsl(var(--primary) / .38);
+  border-radius: 999px;
+  color: hsl(var(--primary));
+  background: hsl(var(--foreground) / .045);
+  transition: border-color .25s ease, background-color .25s ease, color .25s ease, transform .25s ease;
+}
+.menu-close:hover {
+  border-color: hsl(var(--accent) / .7);
+  color: hsl(var(--accent));
+  background: hsl(var(--accent) / .1);
+  transform: rotate(90deg);
+}
 
 /* --- Main Content --- */
 .main-block {
