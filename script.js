@@ -83,6 +83,12 @@ document.addEventListener('DOMContentLoaded', () => {
     else openMenu();
   });
 
+  /* Close button inside the menu overlay */
+  const menuClose = document.getElementById('menu-close');
+  if (menuClose) {
+    menuClose.addEventListener('click', closeMenu);
+  }
+
   /* ---------- CONTACT PANEL ---------- */
   const contactLink = document.getElementById('contact-link');
   const contactBack = document.getElementById('contact-back');
