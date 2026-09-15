@@ -5,8 +5,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------- SECRET CONFIG ---------- */
-  const SECRET_CODE = '2055';     // Case-insensitive
-  const VISITS_REQUIRED = 5;                 // Visits before the Secret Door appears
+  const SECRET_CODE = '2055';                // Case-insensitive
+  const VISITS_REQUIRED = 5;
   const VISIT_KEY = 'mommysVisits';
   const UNLOCK_KEY = 'mommysUnlocked';
 
@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ---------- HAMBURGER MENU ---------- */
   const menuToggle = document.getElementById('menu-toggle');
   const menuIcon = document.getElementById('menu-icon');
+  const menuClose = document.getElementById('menu-close');
   const navOverlay = document.getElementById('quick-links');
 
   const ICON_MENU = '<path d="M4 7h16M4 12h16M4 17h16"/>';
@@ -63,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.add('menu-open');
     menuToggle.classList.add('is-open');
     menuToggle.setAttribute('aria-expanded', 'true');
-    menuToggle.setAttribute('aria-label', 'Close menu');
     setMenuIcon(true);
   };
 
@@ -74,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.remove('menu-open');
     menuToggle.classList.remove('is-open');
     menuToggle.setAttribute('aria-expanded', 'false');
-    menuToggle.setAttribute('aria-label', 'Open menu');
     setMenuIcon(false);
   };
 
@@ -83,22 +82,22 @@ document.addEventListener('DOMContentLoaded', () => {
     else openMenu();
   });
 
-  /* Close button inside the menu overlay */
-  const menuClose = document.getElementById('menu-close');
-  if (menuClose) {
-    menuClose.addEventListener('click', closeMenu);
-  }
+  if (menuClose) menuClose.addEventListener('click', closeMenu);
 
   /* ---------- CONTACT PANEL ---------- */
   const contactLink = document.getElementById('contact-link');
   const contactBack = document.getElementById('contact-back');
-  contactLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    navOverlay.classList.add('is-contact');
-  });
-  contactBack.addEventListener('click', () => {
-    navOverlay.classList.remove('is-contact');
-  });
+  if (contactLink) {
+    contactLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      navOverlay.classList.add('is-contact');
+    });
+  }
+  if (contactBack) {
+    contactBack.addEventListener('click', () => {
+      navOverlay.classList.remove('is-contact');
+    });
+  }
 
   /* ---------- OBEDIENCE METER ---------- */
   const meterFill = document.getElementById('meter-fill');
@@ -108,13 +107,13 @@ document.addEventListener('DOMContentLoaded', () => {
     link.addEventListener('mouseenter', () => {
       if (obedienceLevel < 100) {
         obedienceLevel = Math.min(obedienceLevel + 20, 100);
-        meterFill.style.width = obedienceLevel + '%';
-        meterText.textContent = obedienceLevel + '%';
+        if (meterFill) meterFill.style.width = obedienceLevel + '%';
+        if (meterText) meterText.textContent = obedienceLevel + '%';
       }
     });
   });
 
-  /* ---------- VISIT COUNTER (Secret Door unlock) ---------- */
+  /* ---------- VISIT COUNTER ---------- */
   let visits = parseInt(localStorage.getItem(VISIT_KEY) || '0', 10) + 1;
   localStorage.setItem(VISIT_KEY, visits);
   const alreadyUnlocked = localStorage.getItem(UNLOCK_KEY) === 'true';
@@ -138,56 +137,88 @@ document.addEventListener('DOMContentLoaded', () => {
   const secretClose = document.getElementById('secret-close');
 
   const SECRET_MESSAGE = "So... you came back. And you supported me. That's not a coincidence. You're one of my favorites now...";
+  const LOCK_SVG_LOCKED = `<svg viewBox="0 0 24 24" width="58" height="58" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+  const LOCK_SVG_OPEN   = `<svg viewBox="0 0 24 24" width="58" height="58" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>`;
 
   let timers = [];
-  const clearTimers = () => { timers.forEach((t) => clearTimeout(t) || clearInterval(t)); timers = []; };
-
-   const showStage = (stage, withFade = false) => {
-    const allStages = [gateStage, codeStage, revealStage];
-    if (!withFade) {
-      allStages.forEach((s) => { s.hidden = s !== stage; s.classList.remove('is-fading'); });
-      return;
-    }
-    // Fade out the currently visible one, then swap
-    const visible = allStages.find((s) => !s.hidden);
-    if (visible) {
-      visible.classList.add('is-fading');
-      setTimeout(() => {
-        allStages.forEach((s) => {
-          s.hidden = s !== stage;
-          s.classList.remove('is-fading');
-        });
-      }, 450);
-    } else {
-      allStages.forEach((s) => { s.hidden = s !== stage; s.classList.remove('is-fading'); });
-    }
+  const clearTimers = () => {
+    timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
+    timers = [];
   };
 
+  /* ---------- STAGE MANAGER ---------- */
+  const allStages = [gateStage, codeStage, revealStage];
+
+  const hideAllStages = () => {
+    allStages.forEach((s) => {
+      s.classList.add('is-hidden');
+      s.classList.remove('is-visible', 'is-fading-in', 'is-fading-out');
+    });
+  };
+
+  const setStage = (stage) => {
+    allStages.forEach((s) => {
+      if (s === stage) {
+        s.classList.remove('is-hidden', 'is-fading-out');
+        s.classList.add('is-fading-in');
+        // force reflow, then animate in
+        void s.offsetWidth;
+        s.classList.remove('is-fading-in');
+        s.classList.add('is-visible');
+      } else {
+        s.classList.add('is-hidden');
+        s.classList.remove('is-visible', 'is-fading-in', 'is-fading-out');
+      }
+    });
+  };
+
+  const fadeOutStage = (stage, onDone) => {
+    stage.classList.remove('is-visible');
+    stage.classList.add('is-fading-out');
+    setTimeout(() => {
+      stage.classList.add('is-hidden');
+      stage.classList.remove('is-fading-out');
+      if (onDone) onDone();
+    }, 450);
+  };
+
+  /* ---------- RESET ---------- */
   const resetSecret = () => {
     clearTimers();
+    hideAllStages();
+
+    // Reset typing
     typingEl.innerHTML = '';
+    typingEl.style.opacity = '1';
+
+    // Reset lock
     lockEl.classList.remove('is-visible', 'is-shaking', 'is-unlocked');
-    lockEl.innerHTML = `<svg viewBox="0 0 24 24" width="58" height="58" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+    lockEl.innerHTML = LOCK_SVG_LOCKED;
+
+    // Hide success, reward button, content
     successEl.hidden = true;
+    successEl.style.opacity = '';
     rewardBtn.hidden = true;
     rewardBtn.classList.remove('is-visible');
     secretContent.hidden = true;
+    secretContent.style.opacity = '';
+
     secretClose.hidden = true;
     codeError.hidden = true;
     codeInput.value = '';
   };
 
+  /* ---------- OPEN / CLOSE ---------- */
   const openSecret = () => {
     closeMenu();
     resetSecret();
     secretOverlay.classList.add('is-open');
     secretOverlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('secret-open');
-    // If already unlocked, skip the gate
     if (alreadyUnlocked) {
       startReveal();
     } else {
-      showStage(gateStage);
+      setStage(gateStage);
     }
   };
 
@@ -198,33 +229,62 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimers();
   };
 
+  /* ---------- REVEAL SEQUENCE ---------- */
   const startReveal = () => {
-        showStage(revealStage, true);
-    // Type message
+    setStage(revealStage);
+
+    // 1. Typing
     let i = 0;
+    typingEl.style.opacity = '1';
+    typingEl.innerHTML = '';
     const typingInterval = setInterval(() => {
       i++;
       typingEl.innerHTML = SECRET_MESSAGE.slice(0, i) + '<span class="secret-cursor"></span>';
       if (i >= SECRET_MESSAGE.length) {
         clearInterval(typingInterval);
-        typingEl.innerHTML = SECRET_MESSAGE;   // strip cursor
-        // Pause, shake
+        typingEl.innerHTML = SECRET_MESSAGE;
+
+        // 2. Pause, then fade typing out
         const t1 = setTimeout(() => {
-          lockEl.classList.add('is-visible', 'is-shaking');
-          // Unlock after shake
+          typingEl.style.opacity = '0';
+
+          // 3. After typing fully gone, show lock
           const t2 = setTimeout(() => {
-            lockEl.classList.remove('is-shaking');
-            lockEl.classList.add('is-unlocked');
-            lockEl.innerHTML = `<svg viewBox="0 0 24 24" width="58" height="58" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>`;
-            successEl.hidden = false;
-            // Show reward button
+            lockEl.classList.add('is-visible');
+
+            // 4. Shake
             const t3 = setTimeout(() => {
-              rewardBtn.hidden = false;
-              rewardBtn.classList.add('is-visible');
-              secretClose.hidden = false;
-            }, 1000);
+              lockEl.classList.add('is-shaking');
+
+              // 5. Unlock
+              const t4 = setTimeout(() => {
+                lockEl.classList.remove('is-shaking');
+                lockEl.classList.add('is-unlocked');
+                lockEl.innerHTML = LOCK_SVG_OPEN;
+                successEl.hidden = false;
+
+                // 6. After a pause, fade out lock + success
+                const t5 = setTimeout(() => {
+                  lockEl.classList.remove('is-visible');
+                  successEl.style.transition = 'opacity .45s ease';
+                  successEl.style.opacity = '0';
+
+                  // 7. Show reward button
+                  const t6 = setTimeout(() => {
+                    successEl.hidden = true;
+                    successEl.style.opacity = '';
+                    rewardBtn.hidden = false;
+                    rewardBtn.classList.add('is-visible');
+                    secretClose.hidden = false;
+                  }, 450);
+                  timers.push(t6);
+                }, 1400);
+                timers.push(t5);
+              }, 1000);
+              timers.push(t4);
+            }, 300);
             timers.push(t3);
-          }, 1000);
+          }, 450);
           timers.push(t2);
         }, 1500);
         timers.push(t1);
@@ -233,52 +293,79 @@ document.addEventListener('DOMContentLoaded', () => {
     timers.push(typingInterval);
   };
 
-  secretLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    openSecret();
-  });
+  /* ---------- LINK CLICK ---------- */
+  if (secretLink) {
+    secretLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      openSecret();
+    });
+  }
 
-  /* ---------- Gate: enter code flow ---------- */
-  codeBtn.addEventListener('click', () => {
-    showStage(codeStage);
-    setTimeout(() => codeInput.focus(), 200);
-  });
-  codeBack.addEventListener('click', () => {
-    codeError.hidden = true;
-    codeInput.value = '';
-    showStage(gateStage);
-  });
+  /* ---------- GATE FLOW ---------- */
+  if (codeBtn) {
+    codeBtn.addEventListener('click', () => {
+      fadeOutStage(gateStage, () => {
+        setStage(codeStage);
+        setTimeout(() => codeInput.focus(), 200);
+      });
+    });
+  }
 
-  codeForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const typed = (codeInput.value || '').trim().toLowerCase();
-    if (typed === SECRET_CODE.toLowerCase()) {
-      // Success — remember it
-      localStorage.setItem(UNLOCK_KEY, 'true');
-      startReveal();
-    } else {
-      codeError.hidden = false;
-      codeInput.classList.add('shake');
-      setTimeout(() => codeInput.classList.remove('shake'), 500);
+  if (codeBack) {
+    codeBack.addEventListener('click', () => {
+      codeError.hidden = true;
       codeInput.value = '';
-      codeInput.focus();
-    }
-  });
+      fadeOutStage(codeStage, () => setStage(gateStage));
+    });
+  }
 
-  /* ---------- Reward reveal ---------- */
+  if (codeForm) {
+    codeForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const typed = (codeInput.value || '').trim().toLowerCase();
+      if (typed === SECRET_CODE.toLowerCase()) {
+        localStorage.setItem(UNLOCK_KEY, 'true');
+        fadeOutStage(codeStage, () => {
+          // reset everything visually before reveal
+          successEl.hidden = true;
+          rewardBtn.hidden = true;
+          rewardBtn.classList.remove('is-visible');
+          secretContent.hidden = true;
+          lockEl.classList.remove('is-visible', 'is-shaking', 'is-unlocked');
+          lockEl.innerHTML = LOCK_SVG_LOCKED;
+          typingEl.style.opacity = '1';
+          typingEl.innerHTML = '';
+          startReveal();
+        });
+      } else {
+        codeError.hidden = false;
+        codeInput.classList.add('shake');
+        setTimeout(() => codeInput.classList.remove('shake'), 500);
+        codeInput.value = '';
+        codeInput.focus();
+      }
+    });
+  }
+
+  /* ---------- REWARD REVEAL ---------- */
+  if (rewardBtn) {
     rewardBtn.addEventListener('click', () => {
-    rewardBtn.classList.add('is-fading');
-    setTimeout(() => {
-      rewardBtn.hidden = true;
-      rewardBtn.classList.remove('is-visible', 'is-fading');
-      secretContent.hidden = false;
-      secretContent.classList.add('is-appearing');
-    }, 450);
-  });
+      rewardBtn.classList.remove('is-visible');
+      setTimeout(() => {
+        rewardBtn.hidden = true;
+        secretContent.hidden = false;
+        secretContent.style.opacity = '0';
+        requestAnimationFrame(() => {
+          secretContent.style.transition = 'opacity .45s ease';
+          secretContent.style.opacity = '1';
+        });
+      }, 450);
+    });
+  }
 
-  secretClose.addEventListener('click', closeSecret);
+  if (secretClose) secretClose.addEventListener('click', closeSecret);
 
-  /* ---------- ESC closes everything ---------- */
+  /* ---------- ESC ---------- */
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeMenu();
@@ -286,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-   /* ---------- Secret Door visit hint ---------- */
+  /* ---------- VISIT HINT ---------- */
   const secretHint = document.getElementById('secret-hint');
   if (secretHint) {
     if (alreadyUnlocked) {
