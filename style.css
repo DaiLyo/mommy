@@ -932,4 +932,64 @@ body.menu-open, body.secret-open { overflow: hidden; }
   box-shadow: 0 0 2rem hsl(331 78% 75% / .35);
 }
 
-.secret-content
+.secret-content {
+  width: min(100%, 31rem);
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid hsl(331 78% 75% / .3);
+  border-radius: 1.25rem;
+  background: hsl(331 78% 75% / .07);
+  animation: fade-up .6s ease both;
+}
+.secret-reward-text {
+  font-family: var(--app-font-serif);
+  font-size: 1.4rem;
+  color: hsl(var(--foreground));
+  margin-top: .5rem;
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(.75rem); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.secret-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  border: 1px solid hsl(331 78% 75% / .35);
+  border-radius: 999px;
+  color: #ffb6c1;
+  background: transparent;
+  transition: border-color .25s ease, background .25s ease;
+}
+.secret-close:hover { border-color: #ffb6c1; background: hsl(331 78% 75% / .08); }
+
+/* --- Responsive --- */
+@media (max-width: 640px) {
+  .page-shell { width: min(100% - 2rem, 1160px); }
+  .hero-name { font-size: clamp(3.55rem, 19vw, 6rem); }
+  .daily-message {
+    top: 1.7rem;
+    width: max-content;
+    max-width: calc(100% - 2rem);
+    font-size: .67rem;
+  }
+  .mood-indicator { top: 4.8rem; }
+  .nav-links { gap: .7rem; }
+  .nav-links a { font-size: 1.55rem; }
+  .obedience-meter { bottom: 5.8rem; }
+  .nav-footer { bottom: 1.6rem; max-width: calc(100% - 2rem); }
+  .header-index { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
