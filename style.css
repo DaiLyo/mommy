@@ -1035,37 +1035,24 @@ body.menu-open, body.secret-open { overflow: hidden; }
   border-color: hsl(var(--primary) / .4);
   background: hsl(var(--primary) / .07);
 }
-/* Fade transitions for secret door stages */
+/* ============================================================
+   SECRET DOOR — staged reveal
+   ============================================================ */
+
 .secret-stage {
-  transition: opacity .5s ease;
+  opacity: 1;
+  transition: opacity .45s ease;
 }
-.secret-stage.is-fading {
+.secret-stage.is-hidden {
+  display: none !important;
+}
+.secret-stage.is-fading-out {
   opacity: 0;
   pointer-events: none;
 }
-
-/* Reward reveal fade */
-.secret-reward-button.is-fading {
-  opacity: 0 !important;
-  pointer-events: none;
-}
-.secret-content.is-appearing {
-  animation: fade-up .6s ease both;
-}
-/* Fade transitions for secret door stages */
-.secret-stage {
-  transition: opacity .5s ease;
-}
-.secret-stage.is-fading {
+.secret-stage.is-fading-in {
   opacity: 0;
-  pointer-events: none;
 }
-
-/* Reward reveal fade */
-.secret-reward-button.is-fading {
-  opacity: 0 !important;
-  pointer-events: none;
-}
-.secret-content.is-appearing {
-  animation: fade-up .6s ease both;
+.secret-stage.is-visible {
+  opacity: 1;
 }
