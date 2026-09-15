@@ -259,9 +259,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* ---------- Secret Door link only shows after 5 visits ---------- */
-  if (!alreadyUnlocked && visits < VISITS_REQUIRED) {
-    secretLink.style.display = 'none';
+   /* ---------- Secret Door visit hint ---------- */
+  const secretHint = document.getElementById('secret-hint');
+  if (secretHint) {
+    if (alreadyUnlocked) {
+      secretHint.textContent = '🔓 Unlocked';
+      secretHint.classList.add('is-unlocked');
+    } else if (visits >= VISITS_REQUIRED) {
+      secretHint.textContent = `🔓 ${visits}/5 — ready`;
+      secretHint.classList.add('is-unlocked');
+    } else {
+      secretHint.textContent = `🔒 ${visits}/5 visits`;
+    }
   }
 
 });
