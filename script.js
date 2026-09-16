@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const secretClose = document.getElementById('secret-close');
   const countdownEl = document.getElementById('reward-countdown');
 
-  const SECRET_MESSAGE = "So... you came back. And you supported me. That's not a coincidence. You're one of my favorites now...";
+  const SECRET_MESSAGE = "So... you came back. And you supported me. That's not a coincidence. I believe you're my favorite now...";
   const LOCK_SVG_LOCKED = `<svg viewBox="0 0 24 24" width="58" height="58" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
   const LOCK_SVG_OPEN   = `<svg viewBox="0 0 24 24" width="58" height="58" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>`;
 
